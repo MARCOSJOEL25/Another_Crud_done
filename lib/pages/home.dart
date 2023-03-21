@@ -29,7 +29,10 @@ class _homeState extends State<home> {
         appBar: AppBar(
           title: MaterialButton(
             onPressed: fetchData,
-            child: Text('C R U D'),
+            child: searchbox(
+              SearchAction: SearchData,
+              fetchData: fetchData,
+            ),
           ),
         ),
         body: Visibility(
@@ -126,6 +129,25 @@ class _homeState extends State<home> {
     });
   }
 
+  Future<void> SearchData(String value) async {
+    final url = 'https://192.168.100.221:7248/api/Product/search/$value';
+
+    final uri = Uri.parse(url);
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      print(response.body);
+      items = productFromJson(response.body);
+    }
+
+    if (items.isEmpty) {
+      fetchData();
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+  }
+
   void showSucessMessage(String message) {
     final SnackBarMessage = SnackBar(
       content: Text(
@@ -146,5 +168,39 @@ class _homeState extends State<home> {
       backgroundColor: Colors.red,
     );
     ScaffoldMessenger.of(context).showSnackBar(SnackBarMessage);
+  }
+}
+
+class searchbox extends StatelessWidget {
+  final SearchAction;
+  final fetchData;
+
+  const searchbox({
+    super.key,
+    this.SearchAction,
+    this.fetchData,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      onChanged: (value) {
+        if (value.isEmpty) {
+          fetchData();
+        }
+        SearchAction(value);
+      },
+      decoration: const InputDecoration(
+        contentPadding: EdgeInsets.all(0),
+        prefixIcon: Icon(
+          Icons.search,
+          color: Colors.black,
+          size: 20,
+        ),
+        prefixIconConstraints: BoxConstraints(maxHeight: 20, minWidth: 25),
+        border: InputBorder.none,
+        hintText: "Search",
+      ),
+    );
   }
 }
