@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/product.dart';
+import '../widget/search.dart';
 import 'add_Page.dart';
 
 class home extends StatefulWidget {
@@ -42,34 +43,51 @@ class _homeState extends State<home> {
           ),
           child: RefreshIndicator(
             onRefresh: fetchData,
-            child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: ((context, index) {
-                  final item = items[index];
-                  return ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text(item.productName),
-                    subtitle: Text(item.description),
-                    trailing: PopupMenuButton(onSelected: (value) {
-                      if (value == 'Edit') {
-                        route_Edit(item);
-                      } else {
-                        DeleteById(item.productId);
-                      }
-                    }, itemBuilder: (context) {
-                      return [
-                        PopupMenuItem(
-                          child: Text('Edit'),
-                          value: 'Edit',
-                        ),
-                        PopupMenuItem(
-                          child: Text('Delete'),
-                          value: 'Delete',
-                        ),
-                      ];
-                    }),
-                  );
-                })),
+            child: Column(children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: 10,
+                  itemBuilder: (context, index){
+                    return Container(
+                      width: 300,
+                      height: 300,
+                      color: Colors.red,
+                    )
+                  },
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: ((context, index) {
+                    final item = items[index];
+                    return ListTile(
+                      leading: CircleAvatar(child: Text('${index + 1}')),
+                      title: Text(item.productName),
+                      subtitle: Text(item.description),
+                      trailing: PopupMenuButton(onSelected: (value) {
+                        if (value == 'Edit') {
+                          route_Edit(item);
+                        } else {
+                          DeleteById(item.productId);
+                        }
+                      }, itemBuilder: (context) {
+                        return [
+                          PopupMenuItem(
+                            child: Text('Edit'),
+                            value: 'Edit',
+                          ),
+                          PopupMenuItem(
+                            child: Text('Delete'),
+                            value: 'Delete',
+                          ),
+                        ];
+                      }),
+                    );
+                  }),
+                ),
+              ),
+            ]),
           ),
         ),
         floatingActionButton: FloatingActionButton(
@@ -169,38 +187,6 @@ class _homeState extends State<home> {
     );
     ScaffoldMessenger.of(context).showSnackBar(SnackBarMessage);
   }
-}
 
-class searchbox extends StatelessWidget {
-  final SearchAction;
-  final fetchData;
-
-  const searchbox({
-    super.key,
-    this.SearchAction,
-    this.fetchData,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      onChanged: (value) {
-        if (value.isEmpty) {
-          fetchData();
-        }
-        SearchAction(value);
-      },
-      decoration: const InputDecoration(
-        contentPadding: EdgeInsets.all(0),
-        prefixIcon: Icon(
-          Icons.search,
-          color: Colors.black,
-          size: 20,
-        ),
-        prefixIconConstraints: BoxConstraints(maxHeight: 20, minWidth: 25),
-        border: InputBorder.none,
-        hintText: "Search",
-      ),
-    );
-  }
+  void getCategory() {}
 }
