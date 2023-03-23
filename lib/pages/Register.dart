@@ -3,16 +3,15 @@ import 'dart:convert';
 import 'package:another_crud/pages/home.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'Register.dart';
+import 'Login.dart';
 
-class Login extends StatefulWidget {
+class Register extends StatefulWidget {
   @override
-  _Login createState() => _Login();
+  _Register createState() => _Register();
 }
 
-class _Login extends State<Login> {
+class _Register extends State<Register> {
   bool isLoading = false;
   TextEditingController UserName = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -21,7 +20,7 @@ class _Login extends State<Login> {
     return Scaffold(
       backgroundColor: Colors.black38,
       appBar: AppBar(
-        title: Text("Login Page"),
+        title: Text("Register Page"),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -76,18 +75,20 @@ class _Login extends State<Login> {
               width: 250,
               decoration: BoxDecoration(
                   color: Colors.blue, borderRadius: BorderRadius.circular(20)),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    isLoading = true;
-                  });
-                  SignIn(UserName.text, password.text);
-                },
-                child: Text(
-                  'Login',
-                  style: TextStyle(color: Colors.white, fontSize: 25),
-                ),
-              ),
+              child: isLoading
+                  ? CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          isLoading = true;
+                        });
+                        SignUp(UserName.text, password.text);
+                      },
+                      child: Text(
+                        'Register',
+                        style: TextStyle(color: Colors.white, fontSize: 25),
+                      ),
+                    ),
             ),
             SizedBox(
               height: 130,
@@ -96,10 +97,10 @@ class _Login extends State<Login> {
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
-                        builder: (BuildContext contex) => Register()),
+                        builder: (BuildContext contex) => Login()),
                     (Route<dynamic> route) => false);
               },
-              child: Text('New User? Create Account'),
+              child: Text('Sign In'),
             )
           ],
         ),
@@ -107,30 +108,26 @@ class _Login extends State<Login> {
     );
   }
 
-  Future<void> SignIn(String email, String password) async {
+  SignUp(String email, String password) async {
     try {
-      SharedPreferences.setMockInitialValues({});
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      var Data = null;
-      const url = 'https://192.168.100.221:7248/api/User/Login';
+      const url = 'https://192.168.100.221:7248/api/User/Register';
       final body = jsonEncode({"userName": "string", "password": "string"});
       final uri = Uri.parse(url);
       final response = await http
           .post(uri, body: body, headers: {'Content-Type': 'application/json'});
       if (response.statusCode == 200) {
-        Data = json.decode(response.body);
-        sharedPreferences.setString("token", Data['result']);
-        print('aqui es ${sharedPreferences.getString('token')}');
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (BuildContext contex) => home()),
-            (Route<dynamic> route) => false);
+        print(response.body);
       }
+
+      print(response.body);
+
       setState(() {
         isLoading = false;
       });
 
-      print(response.body);
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (BuildContext contex) => Login()),
+          (Route<dynamic> route) => false);
     } catch (e) {
       print(e);
     }

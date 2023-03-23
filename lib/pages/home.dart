@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:another_crud/pages/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/Category.dart';
 import '../models/product.dart';
@@ -24,14 +26,36 @@ class _homeState extends State<home> {
   @override
   void initState() {
     super.initState();
+    CheckLoginIn();
     fetchData();
     getCategory();
+  }
+
+  Future<void> CheckLoginIn() async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    print(sharedPreferences.getString('token'));
+    if (sharedPreferences.getString('token') == null) {
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (BuildContext contex) => Login()),
+          (Route<dynamic> route) => false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          actions: [
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (BuildContext contex) => Login()),
+                      (Route<dynamic> route) => false);
+                },
+                child: Text('Log out'))
+          ],
           title: MaterialButton(
             onPressed: fetchData,
             child: searchbox(
@@ -40,6 +64,7 @@ class _homeState extends State<home> {
             ),
           ),
         ),
+        drawer: Drawer(),
         body: Visibility(
           visible: isLoading,
           replacement: const Center(
