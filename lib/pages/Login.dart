@@ -107,14 +107,14 @@ class _Login extends State<Login> {
     );
   }
 
-  Future<void> SignIn(String email, String password) async {
+  Future<void> SignIn(String User, String Password) async {
     try {
       SharedPreferences.setMockInitialValues({});
       SharedPreferences sharedPreferences =
           await SharedPreferences.getInstance();
       var Data = null;
       const url = 'https://192.168.100.221:7248/api/User/Login';
-      final body = jsonEncode({"userName": "string", "password": "string"});
+      final body = jsonEncode({"userName": User, "password": Password});
       final uri = Uri.parse(url);
       final response = await http
           .post(uri, body: body, headers: {'Content-Type': 'application/json'});
@@ -126,13 +126,29 @@ class _Login extends State<Login> {
             MaterialPageRoute(builder: (BuildContext contex) => home()),
             (Route<dynamic> route) => false);
       }
+
+      if (response.statusCode == 400) {
+        UserName.clear();
+        password.clear();
+        showErrorMessage("Usuario o contraseña es incorrecta");
+      }
+
       setState(() {
         isLoading = false;
       });
-
-      print(response.body);
     } catch (e) {
       print(e);
     }
+  }
+
+  void showErrorMessage(String message) {
+    final SnackBarMessage = SnackBar(
+      content: Text(
+        message,
+        style: TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.red,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBarMessage);
   }
 }

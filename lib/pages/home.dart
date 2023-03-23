@@ -28,13 +28,11 @@ class _homeState extends State<home> {
     super.initState();
     CheckLoginIn();
     fetchData();
-    getCategory();
   }
 
   Future<void> CheckLoginIn() async {
-    SharedPreferences.setMockInitialValues({});
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    print(sharedPreferences.getString('token'));
+    print('desde home ${sharedPreferences.getString('token')}');
     if (sharedPreferences.getString('token') == null) {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext contex) => Login()),
@@ -46,16 +44,6 @@ class _homeState extends State<home> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          actions: [
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (BuildContext contex) => Login()),
-                      (Route<dynamic> route) => false);
-                },
-                child: Text('Log out'))
-          ],
           title: MaterialButton(
             onPressed: fetchData,
             child: searchbox(
@@ -64,7 +52,7 @@ class _homeState extends State<home> {
             ),
           ),
         ),
-        drawer: Drawer(),
+        drawer: DrawerPerfil(),
         body: Visibility(
           visible: isLoading,
           replacement: const Center(
@@ -210,9 +198,9 @@ class _homeState extends State<home> {
     final uri = Uri.parse(url);
     final response = await http.get(uri);
     if (response.statusCode == 200) {
-      print(response.body);
       items = productFromJson(response.body);
     }
+    await getCategory();
 
     setState(() {
       isLoading = true;
@@ -266,13 +254,8 @@ class _homeState extends State<home> {
     final uri = Uri.parse(url);
     final response = await http.get(uri);
     if (response.statusCode == 200) {
-      print(response.body);
       itemsCategory = categoryFromJson(response.body);
     }
-
-    setState(() {
-      isLoading = true;
-    });
   }
 
   Future<void> getProductByCategory(int id) async {
@@ -295,5 +278,58 @@ class _homeState extends State<home> {
     setState(() {
       isLoading = true;
     });
+  }
+}
+
+class DrawerPerfil extends StatelessWidget {
+  const DrawerPerfil({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      // Agrega un ListView al drawer. Esto asegura que el usuario pueda desplazarse
+      // a través de las opciones en el Drawer si no hay suficiente espacio vertical
+      // para adaptarse a todo.
+      child: ListView(
+        // Importante: elimina cualquier padding del ListView.
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            child: Text('Perfil'),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+          ),
+          ListTile(
+            title: Text('Item 1'),
+            onTap: () {
+              // Actualiza el estado de la aplicación
+              // ...
+              // Luego cierra el drawer
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: Text('Item 2'),
+            onTap: () {
+              // // Actualiza el estado de la aplicación
+              // ...
+              // Luego cierra el drawer
+              Navigator.pop(context);
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (BuildContext contex) => Login()),
+                    (Route<dynamic> route) => false);
+              },
+              child: Text('Log out'))
+        ],
+      ),
+    );
   }
 }
