@@ -1,10 +1,15 @@
 import 'dart:convert';
 
+import 'package:another_crud/pages/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/Category.dart';
 import '../models/product.dart';
+import '../widget/search.dart';
 import 'add_Page.dart';
+import 'details_Product.dart';
 
 class home extends StatefulWidget {
   const home({super.key});
@@ -15,12 +20,24 @@ class home extends StatefulWidget {
 
 class _homeState extends State<home> {
   List<Product> items = [];
+  List<Category> itemsCategory = [];
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    CheckLoginIn();
     fetchData();
+  }
+
+  Future<void> CheckLoginIn() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    print('desde home ${sharedPreferences.getString('token')}');
+    if (sharedPreferences.getString('token') == null) {
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (BuildContext contex) => Login()),
+          (Route<dynamic> route) => false);
+    }
   }
 
   @override
@@ -35,6 +52,7 @@ class _homeState extends State<home> {
             ),
           ),
         ),
+        drawer: DrawerPerfil(),
         body: Visibility(
           visible: isLoading,
           replacement: const Center(
@@ -42,34 +60,94 @@ class _homeState extends State<home> {
           ),
           child: RefreshIndicator(
             onRefresh: fetchData,
-            child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: ((context, index) {
-                  final item = items[index];
-                  return ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text(item.productName),
-                    subtitle: Text(item.description),
-                    trailing: PopupMenuButton(onSelected: (value) {
-                      if (value == 'Edit') {
-                        route_Edit(item);
-                      } else {
-                        DeleteById(item.productId);
-                      }
-                    }, itemBuilder: (context) {
-                      return [
-                        PopupMenuItem(
-                          child: Text('Edit'),
-                          value: 'Edit',
+            child: Column(children: [
+              Container(
+                margin: EdgeInsets.all(20),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height * 0.030,
+                child: Text(
+                  'Categorias',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.all(5),
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height * 0.1,
+                child: Expanded(
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: itemsCategory.length,
+                    itemBuilder: (context, index) {
+                      final item = itemsCategory[index];
+                      return TextButton(
+                        onPressed: () {
+                          setState(() {
+                            isLoading = false;
+                          });
+                          getProductByCategory(item.id);
+                        },
+                        child: Container(
+                          color: Colors.green,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 5, horizontal: 10),
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 13.0),
+                          ),
                         ),
-                        PopupMenuItem(
-                          child: Text('Delete'),
-                          value: 'Delete',
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Visibility(
+                  visible: items.isNotEmpty,
+                  replacement: Center(child: Text('No items')),
+                  child: ListView.builder(
+                    itemCount: items.length,
+                    padding: EdgeInsets.all(12),
+                    itemBuilder: ((context, index) {
+                      Product item = items[index];
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(child: Text('${index + 1}')),
+                          title: Text(item.productName),
+                          subtitle: Text(item.description),
+                          onTap: () {
+                            var route = MaterialPageRoute(
+                                builder: (context) => details_product(
+                                      product: item,
+                                    ));
+                            Navigator.push(context, route);
+                          },
+                          trailing: PopupMenuButton(onSelected: (value) {
+                            if (value == 'Edit') {
+                              route_Edit(item);
+                            } else {
+                              DeleteById(item.productId);
+                            }
+                          }, itemBuilder: (context) {
+                            return [
+                              PopupMenuItem(
+                                child: Text('Edit'),
+                                value: 'Edit',
+                              ),
+                              PopupMenuItem(
+                                child: Text('Delete'),
+                                value: 'Delete',
+                              ),
+                            ];
+                          }),
                         ),
-                      ];
+                      );
                     }),
-                  );
-                })),
+                  ),
+                ),
+              ),
+            ]),
           ),
         ),
         floatingActionButton: FloatingActionButton(
@@ -120,9 +198,9 @@ class _homeState extends State<home> {
     final uri = Uri.parse(url);
     final response = await http.get(uri);
     if (response.statusCode == 200) {
-      print(response.body);
       items = productFromJson(response.body);
     }
+    await getCategory();
 
     setState(() {
       isLoading = true;
@@ -169,37 +247,88 @@ class _homeState extends State<home> {
     );
     ScaffoldMessenger.of(context).showSnackBar(SnackBarMessage);
   }
+
+  Future<void> getCategory() async {
+    const url = 'https://192.168.100.221:7248/api/Category';
+
+    final uri = Uri.parse(url);
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      itemsCategory = categoryFromJson(response.body);
+    }
+  }
+
+  Future<void> getProductByCategory(int id) async {
+    if (id == 11) {
+      setState(() {
+        isLoading = false;
+      });
+      fetchData();
+      return;
+    }
+    final url = 'https://192.168.100.221:7248/api/Product/filterByCategory/$id';
+
+    final uri = Uri.parse(url);
+    final response = await http.get(uri);
+    if (response.statusCode == 200) {
+      print(response.body);
+      items = productFromJson(response.body);
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+  }
 }
 
-class searchbox extends StatelessWidget {
-  final SearchAction;
-  final fetchData;
-
-  const searchbox({
+class DrawerPerfil extends StatelessWidget {
+  const DrawerPerfil({
     super.key,
-    this.SearchAction,
-    this.fetchData,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      onChanged: (value) {
-        if (value.isEmpty) {
-          fetchData();
-        }
-        SearchAction(value);
-      },
-      decoration: const InputDecoration(
-        contentPadding: EdgeInsets.all(0),
-        prefixIcon: Icon(
-          Icons.search,
-          color: Colors.black,
-          size: 20,
-        ),
-        prefixIconConstraints: BoxConstraints(maxHeight: 20, minWidth: 25),
-        border: InputBorder.none,
-        hintText: "Search",
+    return Drawer(
+      // Agrega un ListView al drawer. Esto asegura que el usuario pueda desplazarse
+      // a través de las opciones en el Drawer si no hay suficiente espacio vertical
+      // para adaptarse a todo.
+      child: ListView(
+        // Importante: elimina cualquier padding del ListView.
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            child: Text('Perfil'),
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+          ),
+          ListTile(
+            title: Text('Item 1'),
+            onTap: () {
+              // Actualiza el estado de la aplicación
+              // ...
+              // Luego cierra el drawer
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: Text('Item 2'),
+            onTap: () {
+              // // Actualiza el estado de la aplicación
+              // ...
+              // Luego cierra el drawer
+              Navigator.pop(context);
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (BuildContext contex) => Login()),
+                    (Route<dynamic> route) => false);
+              },
+              child: Text('Log out'))
+        ],
       ),
     );
   }

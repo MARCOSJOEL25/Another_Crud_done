@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:another_crud/pages/Login.dart';
 import 'package:another_crud/pages/home.dart';
 import 'package:flutter/material.dart';
 
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData.dark(),
-      home: const home(),
+      home: Login(),
     );
   }
 }
