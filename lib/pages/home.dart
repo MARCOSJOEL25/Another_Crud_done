@@ -35,43 +35,48 @@ class _homeState extends State<home> {
             ),
           ),
         ),
-        body: Visibility(
-          visible: isLoading,
-          replacement: const Center(
-            child: CircularProgressIndicator(),
+        body: Column(children: [
+          Expanded(
+            child: Visibility(
+              visible: isLoading,
+              replacement: const Center(
+                child: CircularProgressIndicator(),
+              ),
+              child: RefreshIndicator(
+                onRefresh: fetchData,
+                child: ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: ((context, index) {
+                    final item = items[index];
+                    return ListTile(
+                      leading: CircleAvatar(child: Text('${index + 1}')),
+                      title: Text(item.productName),
+                      subtitle: Text(item.description),
+                      trailing: PopupMenuButton(onSelected: (value) {
+                        if (value == 'Edit') {
+                          route_Edit(item);
+                        } else {
+                          DeleteById(item.productId);
+                        }
+                      }, itemBuilder: (context) {
+                        return [
+                          PopupMenuItem(
+                            child: Text('Edit'),
+                            value: 'Edit',
+                          ),
+                          PopupMenuItem(
+                            child: Text('Delete'),
+                            value: 'Delete',
+                          ),
+                        ];
+                      }),
+                    );
+                  }),
+                ),
+              ),
+            ),
           ),
-          child: RefreshIndicator(
-            onRefresh: fetchData,
-            child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: ((context, index) {
-                  final item = items[index];
-                  return ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text(item.productName),
-                    subtitle: Text(item.description),
-                    trailing: PopupMenuButton(onSelected: (value) {
-                      if (value == 'Edit') {
-                        route_Edit(item);
-                      } else {
-                        DeleteById(item.productId);
-                      }
-                    }, itemBuilder: (context) {
-                      return [
-                        PopupMenuItem(
-                          child: Text('Edit'),
-                          value: 'Edit',
-                        ),
-                        PopupMenuItem(
-                          child: Text('Delete'),
-                          value: 'Delete',
-                        ),
-                      ];
-                    }),
-                  );
-                })),
-          ),
-        ),
+        ]),
         floatingActionButton: FloatingActionButton(
           onPressed: route_add,
           child: Icon(Icons.add),
@@ -115,7 +120,8 @@ class _homeState extends State<home> {
   }
 
   Future<void> fetchData() async {
-    const url = 'https://192.168.100.221:7248/api/Product';
+    //const url = 'https://192.168.100.221:7248/api/Product';
+    const url = 'https://192.168.100.14:7248/api/Product';
 
     final uri = Uri.parse(url);
     final response = await http.get(uri);
